@@ -1,7 +1,11 @@
-.PHONY: clean build 
+.PHONY: build deploy
 
-clean:
-	rm -rf ./bin
+build:
+	sam build
 
-build: clean
-	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o bin/cmd cmd/main.go
+deploy:
+	sam deploy --guided
+
+build-HelloWorldFunction:
+	GOOS=linux GOARCH=arm64 go build -o bootstrap
+	cp ./bootstrap $(ARTIFACTS_DIR)/.

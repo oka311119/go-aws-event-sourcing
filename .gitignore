@@ -17,3 +17,6 @@ bin
 
 # AWS environment variables
 .env
+
+# AWS SAM build artifacts
+.aws-sam
