@@ -5,7 +5,7 @@ version = 0.1
 [default]
 [default.global]
 [default.global.parameters]
-stack_name = "aws-sam-golang"
+stack_name = "simple-es-stask"
 
 [default.build]
 [default.build.parameters]
@@ -18,7 +18,7 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-3u67zacti49r"
-s3_prefix = "aws-sam-golang"
+s3_prefix = "simple-es-stask"
 region = "ap-northeast-1"
 image_repositories = []
 

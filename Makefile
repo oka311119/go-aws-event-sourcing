@@ -3,9 +3,12 @@
 build:
 	sam build
 
-deploy:
+validate:
+	sam validate --lint
+
+deploy: build validate
 	sam deploy --guided
 
-build-HelloWorldFunction:
-	GOOS=linux GOARCH=arm64 go build -o bootstrap
-	cp ./bootstrap $(ARTIFACTS_DIR)/.
+local:
+	sam local invoke
+# aws cloudformation delete-stack --stack-name スタック名
