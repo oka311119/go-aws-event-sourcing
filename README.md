@@ -78,22 +78,14 @@ git clone https://github.com/yourusername/yourrepository.git
 cd yourrepository
 ```
 
-2. Compile and run the project:
-
-``` css Copy code
-go build -o main cmd/main.go
-./main
-```
-
-3. Deploy the AWS infrastructure using AWS CloudFormation:
-
-``` bash Copy code
-aws cloudformation package --template-file template/cloudformation/template.yaml --s3-bucket your_bucket_name --output-template-file packaged.yaml
-aws cloudformation deploy --template-file packaged.yaml --stack-name your_stack_name --capabilities CAPABILITY_IAM
-```
-
-4. Configure your front-end application to use the deployed AWS resources (Cognito, AppSync, etc.).
+2. Configure your front-end application to use the deployed AWS resources (Cognito, AppSync, etc.).
 
 ``` bash
 aws cognito-idp admin-create-user --user-pool-id USER_POOL_ID --username USERNAME
+```
+
+3. Compile and run the project & Deploy the AWS infrastructure using AWS CloudFormation:
+
+``` bash Copy code
+make deploy
 ```

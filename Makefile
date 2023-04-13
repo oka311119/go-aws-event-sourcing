@@ -11,4 +11,3 @@ deploy: build validate
 
 local:
 	sam local invoke
-# aws cloudformation delete-stack --stack-name スタック名
