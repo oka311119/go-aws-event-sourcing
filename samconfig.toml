@@ -18,9 +18,10 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-3u67zacti49r"
-s3_prefix = "simple-es-stask"
+s3_prefix = "simple-es-stask2"
 region = "ap-northeast-1"
 image_repositories = []
+stack_name = "simple-es-stask2"
 
 [default.package]
 [default.package.parameters]

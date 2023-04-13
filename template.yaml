@@ -37,40 +37,44 @@ Resources:
         type Query {
           getHello: String
         }
+        type Mutation {
+          addEvent(event: AWSJSON): ID
+        }
         schema {
           query: Query
+          mutation: Mutation
         }
 
-  LambdaFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: go1.x
+  EventsTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      CodeUri: cmd/
-      Handler: bootstrap
-      Runtime: provided.al2
-      FunctionName: simple-es-stask-lambda-resolver
-      Architectures: [arm64]
-      Environment:
-        Variables:
-          LOG_LEVEL: DEBUG
-          PARAM1: VALUE
-
-  AppSyncLambdaDataSource:
+      TableName: EventsTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  
+  AppSyncEventDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      Name: AppSyncLambdaDataSource
+      Name: EventsTable
       Type: AWS_LAMBDA
-      LambdaConfig:
-        LambdaFunctionArn: !GetAtt LambdaFunction.Arn
-      ServiceRoleArn: !GetAtt AppSyncLambdaRole.Arn
-
-  AppSyncLambdaRole:
+      ServiceRoleArn: !GetAtt AppSyncEventDataSourceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref EventsTable
+        AwsRegion: !Ref AWS::Region
+  
+  AppSyncEventDataSourceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
@@ -79,23 +83,107 @@ Resources:
             Action:
               - sts:AssumeRole
       Policies:
-        - PolicyName: AppSyncLambdaRolePolicy
+        - PolicyName: AppSyncEventDataSourcePolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
-                  - lambda:InvokeFunction
+                  - dynamodb:PutItem
                 Resource:
-                  - !GetAtt LambdaFunction.Arn
+                  - !GetAtt EventsTable.Arn
 
-  AppSyncLambdaResolver:
+  AppSyncAddEventResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      TypeName: Query
-      FieldName: getHello
-      DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
+      TypeName: Mutation
+      FieldName: addEvent
+      DataSourceName: !GetAtt AppSyncEventDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version" : "2017-02-28",
+          "operation" : "PutItem",
+          "key" : {
+            "id" : $util.dynamodb.toDynamoDBJson($util.autoId())
+          },
+          "attributeValues" : {
+            "event" : $util.dynamodb.toDynamoDBJson($ctx.args.event)
+                  }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($ctx.result.id)
+
+  # AppSyncGetHelloResolver:
+  #   Type: AWS::AppSync::Resolver
+  #   Properties:
+  #     ApiId: !GetAtt AppSyncApi.ApiId
+  #     TypeName: Query
+  #     FieldName: getHello
+  #     DataSourceName: !GetAtt AppSyncEventDataSource.Name
+  #     RequestMappingTemplate: |
+  #       {
+  #         "version": "2017-02-28",
+  #         "payload": {}
+  #       }
+  #     ResponseMappingTemplate: |
+  #       $util.toJson("Hello, world!") 
+
+  # LambdaFunction:
+  #   Type: AWS::Serverless::Function
+  #   Metadata:
+  #     BuildMethod: go1.x
+  #   Properties:
+  #     CodeUri: cmd/
+  #     Handler: bootstrap
+  #     Runtime: provided.al2
+  #     FunctionName: simple-es-stask-lambda-resolver
+  #     Architectures: [arm64]
+  #     Environment:
+  #       Variables:
+  #         LOG_LEVEL: DEBUG
+  #         PARAM1: VALUE
+
+  # AppSyncLambdaDataSource:
+  #   Type: AWS::AppSync::DataSource
+  #   Properties:
+  #     ApiId: !GetAtt AppSyncApi.ApiId
+  #     Name: AppSyncLambdaDataSource
+  #     Type: AWS_LAMBDA
+  #     LambdaConfig:
+  #       LambdaFunctionArn: !GetAtt LambdaFunction.Arn
+  #     ServiceRoleArn: !GetAtt AppSyncLambdaRole.Arn
+
+  # AppSyncLambdaRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - appsync.amazonaws.com
+  #           Action:
+  #             - sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: AppSyncLambdaRolePolicy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - lambda:InvokeFunction
+  #               Resource:
+  #                 - !GetAtt LambdaFunction.Arn
+
+  # AppSyncLambdaResolver:
+  #   Type: AWS::AppSync::Resolver
+  #   Properties:
+  #     ApiId: !GetAtt AppSyncApi.ApiId
+  #     TypeName: Query
+  #     FieldName: getHello
+  #     DataSourceName: !GetAtt AppSyncLambdaDataSource.Name
 
 Outputs:
   GraphQLApiUrl:
